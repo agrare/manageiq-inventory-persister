@@ -14,7 +14,12 @@ def from_yaml(ems, inv_yaml)
   raw_collections = YAML.load(inv_yaml)
 
   raw_collections.each do |collection|
-    init_attrs = collection.except(:data).merge(:parent => ems)
+    init_attrs = collection.except(:data)
+
+    # fixup the inv collection
+    init_attrs[:parent]      = ems
+    init_attrs[:model_class] = init_attrs[:model_class].constantize
+
     inv_collections[collection[:name]] = ManagerRefresh::InventoryCollection.new init_attrs
   end
 
