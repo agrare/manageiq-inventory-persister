@@ -1,8 +1,3 @@
-def from_yaml(inv_yaml)
-  persister = ManagerRefresh::Inventory::Persister.from_yaml(inv_yaml)
-  return persister.manager, persister.collections
-end
-
 log = Logger.new(STDOUT)
 begin
   log.info("Waiting for inventory")
