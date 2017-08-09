@@ -1,4 +1,17 @@
+#!/usr/bin/env ruby
+
+if !defined?(Rails)
+  ENV["RAILS_ROOT"] ||= File.expand_path("../manageiq", __dir__)
+  require File.expand_path("config/environment", ENV["RAILS_ROOT"])
+end
+
+require "trollop"
+require "manageiq-messaging"
+
+Thread.abort_on_exception = true
+
 log = Logger.new(STDOUT)
+
 begin
   log.info("Waiting for inventory")
   ManageIQ::Messaging.logger = log
