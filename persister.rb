@@ -10,12 +10,12 @@ require "manageiq-messaging"
 
 Thread.abort_on_exception = true
 
-log = Logger.new(STDOUT)
+def main(args)
+  log = Logger.new(STDOUT)
 
-begin
-  log.info("Waiting for inventory")
-  ManageIQ::Messaging.logger = log
+  ManageIQ::Messaging.logger = log if args[:debug]
 
+  log.info("Connecting...")
   client = ManageIQ::Messaging::Client.open(
     :host => "localhost",
     :port => 61616,
@@ -23,9 +23,11 @@ begin
     :password => "smartvm",
     :client_ref => "inventory_persister"
   )
+  log.info("Connected.")
 
-  client.subscribe_messages(:service => 'inventory', :limit => 10) do |messages|
-    log.info("Received #{messages.count} messages")
+  log.info("Waiting for inventory...")
+
+  client.subscribe_messages(:service => "inventory", :limit => 10) do |messages|
     messages.each do |message|
       begin
         persister = ManagerRefresh::Inventory::Persister.from_raw_data(message.payload)
@@ -42,9 +44,34 @@ begin
     end
   end
 
-  loop do
-    sleep(1)
-  end
+  loop { sleep 1 }
 ensure
   client.close if client
 end
+
+def parse_args
+  args = Trollop.options do
+    opt :q_hostname, "queue hostname", :type => :string
+    opt :q_port,     "queue port",     :type => :integer
+    opt :q_user,     "queue username", :type => :string
+    opt :q_password, "queue password", :type => :string
+    opt :debug,      "debug", :type => :flag
+  end
+
+  args[:q_hostname]   ||= ENV["QUEUE_HOSTNAME"] || "localhost"
+  args[:q_port]       ||= ENV["QUEUE_PORT"]     || "61616"
+  args[:q_user]       ||= ENV["QUEUE_USER"]     || "admin"
+  args[:q_password]   ||= ENV["QUEUE_PASSWORD"] || "smartvm"
+
+  args[:q_port] = args[:q_port].to_i
+
+  # %i(q_hostname q_port q_user q_password).each do |param|
+  #   raise Trollop::CommandlineError, "--#{param} required" if args[param].nil?
+  # end
+
+  args
+end
+
+args = parse_args
+
+main args
