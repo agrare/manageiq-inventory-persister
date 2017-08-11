@@ -30,7 +30,7 @@ def main(args)
   client.subscribe_messages(:service => "inventory", :limit => 10) do |messages|
     messages.each do |message|
       begin
-        persister = ManagerRefresh::Inventory::Persister.from_raw_data(message.payload)
+        persister = ManagerRefresh::Inventory::Persister.from_yaml(message.payload)
 
         log.info("Saving Inventory...")
         ManagerRefresh::SaveInventory.save_inventory(persister.manager, persister.inventory_collections)
